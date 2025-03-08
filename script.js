@@ -8,9 +8,8 @@ const closeBtn = document.querySelector('.close');
 const saveCardBtn = document.getElementById('save-card-btn');
 const cardTitleInput = document.getElementById('card-title');
 const cardDescriptionInput = document.getElementById('card-description');
-let editingCardId = null; // شناسه کارتی که در حال ویرایش است
+let editingCardId = null;
 
-// Render cards
 function renderCards() {
     const todoColumn = document.getElementById('todo');
     const doingColumn = document.getElementById('doing');
@@ -26,7 +25,6 @@ function renderCards() {
         cardElement.id = card.id;
         cardElement.draggable = true;
 
-        // Add delete and edit buttons
         const deleteButton = `<button class="delete-card-btn" data-id="${card.id}"><i class="fas fa-trash-alt"></i></button>`;
         const editButton = `<button class="edit-card-btn" data-id="${card.id}"><i class="fas fa-edit"></i></button>`;
 
@@ -49,21 +47,18 @@ function renderCards() {
         }
     });
 
-    // Add event listeners to delete buttons
     document.querySelectorAll('.delete-card-btn').forEach((button) => {
         button.addEventListener('click', deleteCard);
     });
 
-    // Add event listeners to edit buttons
     document.querySelectorAll('.edit-card-btn').forEach((button) => {
         button.addEventListener('click', editCard);
     });
 }
 
-// Open modal
 addCardBtn.addEventListener('click', () => {
     modal.style.display = 'block';
-    editingCardId = null; // اطمینان حاصل شود که در حالت افزودن کارت جدید هستیم
+    editingCardId = null;
     cardTitleInput.value = '';
     cardDescriptionInput.value = '';
 });
@@ -73,7 +68,7 @@ closeBtn.addEventListener('click', () => {
     modal.style.display = 'none';
     cardTitleInput.value = '';
     cardDescriptionInput.value = '';
-    editingCardId = null; // پاک کردن شناسه کارت در حال ویرایش
+    editingCardId = null;
 });
 
 // Save card
@@ -92,15 +87,13 @@ saveCardBtn.addEventListener('click', () => {
     }
 
     if (editingCardId) {
-        // ویرایش کارت موجود
         const cardIndex = cards.findIndex((card) => card.id === editingCardId);
         if (cardIndex !== -1) {
             cards[cardIndex].title = title;
             cards[cardIndex].description = description;
         }
-        editingCardId = null; // پس از ویرایش، شناسه کارت در حال ویرایش را پاک کنید
+        editingCardId = null;
     } else {
-        // افزودن کارت جدید
         const newCard = {
             id: Date.now(),
             title: title,
@@ -118,10 +111,9 @@ saveCardBtn.addEventListener('click', () => {
     cardDescriptionInput.value = '';
 });
 
-// Delete all cards
 deleteAllCardsBtn.addEventListener('click', () => {
     if (cards.length === 0) {
-        return; // اگر کارتی وجود ندارد، کاری انجام نده
+        return;
     }
 
     if (confirm('Are you sure you want to delete all cards?')) {
@@ -131,7 +123,6 @@ deleteAllCardsBtn.addEventListener('click', () => {
     }
 });
 
-// Delete card
 function deleteCard(event) {
     const cardId = parseInt(event.currentTarget.dataset.id);
     cards = cards.filter((card) => card.id !== cardId);
@@ -139,9 +130,8 @@ function deleteCard(event) {
     renderCards();
 }
 
-// Edit card
 function editCard(event) {
-    editingCardId = parseInt(event.target.closest('.edit-card-btn').dataset.id); // ثبت شناسه کارت در حال ویرایش
+    editingCardId = parseInt(event.target.closest('.edit-card-btn').dataset.id); 
     const card = cards.find((card) => card.id === editingCardId);
 
     cardTitleInput.value = card.title;
@@ -149,7 +139,6 @@ function editCard(event) {
     modal.style.display = 'block';
 }
 
-// Drag & Drop
 function dragStart(event) {
     draggedCardId = event.target.id;
     event.dataTransfer.setData('text', draggedCardId);
@@ -174,4 +163,4 @@ function drop(event) {
     }
 }
 
-renderCards();  
+renderCards();
