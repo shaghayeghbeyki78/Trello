@@ -131,7 +131,7 @@ function deleteCard(event) {
 }
 
 function editCard(event) {
-    editingCardId = parseInt(event.target.closest('.edit-card-btn').dataset.id); 
+    editingCardId = parseInt(event.target.closest('.edit-card-btn').dataset.id);
     const card = cards.find((card) => card.id === editingCardId);
 
     cardTitleInput.value = card.title;
