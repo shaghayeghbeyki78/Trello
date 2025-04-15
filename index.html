@@ -2,58 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Trello Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="style.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-  />
 </head>
 <body>
-  <h1 class="board-title">Trello Board</h1>
+  <h1 class="title">Trello Board</h1>
   <div class="board">
-    <div class="column" data-status="todo">
+    <div class="column" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)">
       <div class="column-header">
         <span>To Do</span>
         <div>
-          <button class="add-task-btn"><i class="fas fa-plus"></i></button>
-          <button class="clear-tasks-btn"><i class="fas fa-trash-alt red"></i></button>
+          <button class="add-btn" onclick="openModal('todo')"><i class="fas fa-plus"></i></button>
+          <button class="clear-btn" onclick="clearColumn('todo')"><i class="fas fa-trash"></i></button>
         </div>
       </div>
-      <div class="task-list"></div>
     </div>
-    <div class="column" data-status="doing">
+    <div class="column" id="doing" ondrop="drop(event)" ondragover="allowDrop(event)">
       <div class="column-header">
         <span>Doing</span>
         <div>
-          <button class="add-task-btn"><i class="fas fa-plus"></i></button>
-          <button class="clear-tasks-btn"><i class="fas fa-trash-alt red"></i></button>
+          <button class="add-btn" onclick="openModal('doing')"><i class="fas fa-plus"></i></button>
+          <button class="clear-btn" onclick="clearColumn('doing')"><i class="fas fa-trash"></i></button>
         </div>
       </div>
-      <div class="task-list"></div>
     </div>
-    <div class="column" data-status="done">
+    <div class="column" id="done" ondrop="drop(event)" ondragover="allowDrop(event)">
       <div class="column-header">
         <span>Done</span>
         <div>
-          <button class="add-task-btn"><i class="fas fa-plus"></i></button>
-          <button class="clear-tasks-btn"><i class="fas fa-trash-alt red"></i></button>
+          <button class="add-btn" onclick="openModal('done')"><i class="fas fa-plus"></i></button>
+          <button class="clear-btn" onclick="clearColumn('done')"><i class="fas fa-trash"></i></button>
         </div>
       </div>
-      <div class="task-list"></div>
     </div>
   </div>
 
   <!-- Modal -->
-  <div class="modal">
+  <div class="modal" id="task-modal">
     <div class="modal-content">
-      <h3>Add / Edit Task</h3>
+      <h3 id="modal-title">Add Task</h3>
       <input type="text" id="task-title" placeholder="Title" />
       <textarea id="task-desc" placeholder="Description"></textarea>
-      <div class="modal-buttons">
-        <button id="save-task">Save</button>
-        <button id="cancel-task">Cancel</button>
+      <div class="modal-actions">
+        <button id="save-card-btn" class="save-btn">Save</button>
+        <button onclick="closeModal()" class="cancel-btn">Cancel</button>
       </div>
     </div>
   </div>

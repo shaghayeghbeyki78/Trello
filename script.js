@@ -1,138 +1,130 @@
-const addTaskBtns = document.querySelectorAll('.add-task-btn');
-const clearBtns = document.querySelectorAll('.clear-tasks-btn');
-const modal = document.querySelector('.modal');
-const titleInput = document.getElementById('task-title');
-const descInput = document.getElementById('task-desc');
-const saveBtn = document.getElementById('save-task');
-const cancelBtn = document.getElementById('cancel-task');
+let currentColumn = '';
+let editingTaskId = null;
 
-let editingTask = null;
-let currentColumn = null;
-
-function getTasks() {
-  return JSON.parse(localStorage.getItem('tasks')) || [];
-}
-
-function saveTasks(tasks) {
-  localStorage.setItem('tasks', JSON.stringify(tasks));
-}
-
-function renderTasks() {
-  document.querySelectorAll('.task-list').forEach(list => list.innerHTML = '');
-
-  const tasks = getTasks();
-  tasks.forEach(task => {
-    const column = document.querySelector(`.column[data-status="${task.status}"] .task-list`);
-    if (column) {
-      column.appendChild(createTaskCard(task));
-    }
-  });
-}
-
-function createTaskCard(task) {
-  const card = document.createElement('div');
-  card.classList.add('task');
-  card.setAttribute('draggable', 'true');
-  card.dataset.id = task.id;
-
-  card.innerHTML = `
-    <h4>${task.title}</h4>
-    <p>${task.desc}</p>
-    <div class="task-actions">
-      <i class="fas fa-edit"></i>
-      <i class="fas fa-trash-alt red"></i>
-    </div>
-  `;
-
-  // Drag events
-  card.addEventListener('dragstart', e => {
-    e.dataTransfer.setData('text/plain', task.id);
-  });
-
-  // Edit
-  card.querySelector('.fa-edit').addEventListener('click', () => {
-    editingTask = task;
-    titleInput.value = task.title;
-    descInput.value = task.desc;
-    modal.style.display = 'flex';
-  });
-
-  // Delete
-  card.querySelector('.fa-trash-alt').addEventListener('click', () => {
-    let tasks = getTasks().filter(t => t.id !== task.id);
-    saveTasks(tasks);
-    renderTasks();
-  });
-
-  return card;
-}
-
-// Add task button
-addTaskBtns.forEach(btn => {
-  btn.addEventListener('click', e => {
-    currentColumn = e.target.closest('.column').dataset.status;
-    editingTask = null;
-    titleInput.value = '';
-    descInput.value = '';
-    modal.style.display = 'flex';
-  });
-});
-
-// Save task
-saveBtn.addEventListener('click', () => {
-  const title = titleInput.value.trim();
-  const desc = descInput.value.trim();
-
-  if (!title || !desc) return alert('Title and Description are required');
-
-  let tasks = getTasks();
-
-  if (editingTask) {
-    tasks = tasks.map(t => t.id === editingTask.id ? { ...t, title, desc } : t);
+function openModal(columnId, task = null) {
+  document.getElementById("task-modal").style.display = "flex";
+  currentColumn = columnId;
+  if (task) {
+    editingTaskId = task.id;
+    document.getElementById("task-title").value = task.title;
+    document.getElementById("task-desc").value = task.desc;
+    document.getElementById("modal-title").textContent = "Edit Task";
   } else {
-    tasks.push({
-      id: Date.now().toString(),
-      title,
-      desc,
-      status: currentColumn,
+    editingTaskId = null;
+    document.getElementById("task-title").value = '';
+    document.getElementById("task-desc").value = '';
+    document.getElementById("modal-title").textContent = "Add Task";
+  }
+}
+
+function closeModal() {
+  document.getElementById("task-modal").style.display = "none";
+}
+
+document.getElementById("save-card-btn").addEventListener("click", saveTask);
+
+function saveTask() {
+  const title = document.getElementById("task-title").value.trim();
+  const desc = document.getElementById("task-desc").value.trim();
+  if (!title || !desc) return alert("Please fill in both fields.");
+
+  const column = document.getElementById(currentColumn);
+  if (editingTaskId) {
+    const taskEl = document.getElementById(editingTaskId);
+    taskEl.querySelector("h4").textContent = title;
+    taskEl.querySelector("p").textContent = desc;
+    taskEl.dataset.title = title;
+    taskEl.dataset.desc = desc;
+  } else {
+    const taskEl = document.createElement("div");
+    const id = "task-" + Date.now();
+    taskEl.id = id;
+    taskEl.className = "task";
+    taskEl.draggable = true;
+    taskEl.dataset.title = title;
+    taskEl.dataset.desc = desc;
+    taskEl.ondragstart = drag;
+
+    taskEl.innerHTML = `
+      <h4>${title}</h4>
+      <p>${desc}</p>
+      <div class="task-actions">
+        <button class="edit-btn" onclick="openModal('${currentColumn}', {id: '${id}', title: '${title}', desc: '${desc}'})"><i class="fas fa-pen"></i></button>
+        <button class="delete-btn" onclick="deleteTask('${id}')"><i class="fas fa-trash"></i></button>
+      </div>
+    `;
+    column.appendChild(taskEl);
+  }
+  closeModal();
+  saveToStorage();
+}
+
+function deleteTask(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+  saveToStorage();
+}
+
+function clearColumn(columnId) {
+  const column = document.getElementById(columnId);
+  [...column.querySelectorAll(".task")].forEach(t => t.remove());
+  saveToStorage();
+}
+
+function drag(event) {
+  event.dataTransfer.setData("text", event.target.id);
+}
+
+function drop(event) {
+  event.preventDefault();
+  const id = event.dataTransfer.getData("text");
+  const task = document.getElementById(id);
+  const column = event.currentTarget;
+  column.appendChild(task);
+  saveToStorage();
+}
+
+function allowDrop(event) {
+  event.preventDefault();
+}
+
+function saveToStorage() {
+  const data = {};
+  document.querySelectorAll(".column").forEach(col => {
+    const tasks = [...col.querySelectorAll(".task")].map(task => ({
+      id: task.id,
+      title: task.dataset.title,
+      desc: task.dataset.desc
+    }));
+    data[col.id] = tasks;
+  });
+  localStorage.setItem("trelloBoard", JSON.stringify(data));
+}
+
+function loadFromStorage() {
+    const data = JSON.parse(localStorage.getItem("trelloBoard")) || {};
+    Object.keys(data).forEach(columnId => {
+      const column = document.getElementById(columnId);
+      data[columnId].forEach(task => {
+        const taskEl = document.createElement("div");
+        taskEl.id = task.id;
+        taskEl.className = "task";
+        taskEl.draggable = true;
+        taskEl.dataset.title = task.title;
+        taskEl.dataset.desc = task.desc;
+        taskEl.ondragstart = drag;
+        taskEl.innerHTML = `
+          <h4>${task.title}</h4>
+          <p>${task.desc}</p>
+          <div class="task-actions">
+            <button class="edit-btn" onclick="openModal('${columnId}', {id: '${task.id}', title: '${task.title}', desc: '${task.desc}'})"><i class="fas fa-pen"></i></button>
+            <button class="delete-btn" onclick="deleteTask('${task.id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        `;
+        column.appendChild(taskEl);
+      });
     });
   }
 
-  saveTasks(tasks);
-  modal.style.display = 'none';
-  renderTasks();
-});
 
-// Cancel modal
-cancelBtn.addEventListener('click', () => {
-  modal.style.display = 'none';
-});
-
-// Clear tasks per column
-clearBtns.forEach(btn => {
-  btn.addEventListener('click', e => {
-    const status = e.target.closest('.column').dataset.status;
-    let tasks = getTasks().filter(t => t.status !== status);
-    saveTasks(tasks);
-    renderTasks();
-  });
-});
-
-// Drag & Drop
-document.querySelectorAll('.task-list').forEach(list => {
-  list.addEventListener('dragover', e => e.preventDefault());
-
-  list.addEventListener('drop', e => {
-    const id = e.dataTransfer.getData('text/plain');
-    const tasks = getTasks().map(t =>
-      t.id === id ? { ...t, status: list.closest('.column').dataset.status } : t
-    );
-    saveTasks(tasks);
-    renderTasks();
-  });
-});
-
-// Initial load
-document.addEventListener('DOMContentLoaded', () => {
-  renderTasks();
-});
+window.onload = loadFromStorage;
