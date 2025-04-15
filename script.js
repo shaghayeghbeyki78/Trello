@@ -1,166 +1,138 @@
-let cards = JSON.parse(localStorage.getItem('cards')) || [];
-let draggedCardId = null;
+const addTaskBtns = document.querySelectorAll('.add-task-btn');
+const clearBtns = document.querySelectorAll('.clear-tasks-btn');
+const modal = document.querySelector('.modal');
+const titleInput = document.getElementById('task-title');
+const descInput = document.getElementById('task-desc');
+const saveBtn = document.getElementById('save-task');
+const cancelBtn = document.getElementById('cancel-task');
 
-const addCardBtn = document.getElementById('add-card-btn');
-const deleteAllCardsBtn = document.getElementById('delete-all-cards-btn');
-const modal = document.getElementById('modal');
-const closeBtn = document.querySelector('.close');
-const saveCardBtn = document.getElementById('save-card-btn');
-const cardTitleInput = document.getElementById('card-title');
-const cardDescriptionInput = document.getElementById('card-description');
-let editingCardId = null;
+let editingTask = null;
+let currentColumn = null;
 
-function renderCards() {
-    const todoColumn = document.getElementById('todo');
-    const doingColumn = document.getElementById('doing');
-    const doneColumn = document.getElementById('done');
+function getTasks() {
+  return JSON.parse(localStorage.getItem('tasks')) || [];
+}
 
-    todoColumn.innerHTML = '<h2>To Do</h2>';
-    doingColumn.innerHTML = '<h2>Doing</h2>';
-    doneColumn.innerHTML = '<h2>Done</h2>';
+function saveTasks(tasks) {
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
 
-    cards.forEach((card) => {
-        const cardElement = document.createElement('div');
-        cardElement.classList.add('card');
-        cardElement.id = card.id;
-        cardElement.draggable = true;
+function renderTasks() {
+  document.querySelectorAll('.task-list').forEach(list => list.innerHTML = '');
 
-        const deleteButton = `<button class="delete-card-btn" data-id="${card.id}"><i class="fas fa-trash-alt"></i></button>`;
-        const editButton = `<button class="edit-card-btn" data-id="${card.id}"><i class="fas fa-edit"></i></button>`;
+  const tasks = getTasks();
+  tasks.forEach(task => {
+    const column = document.querySelector(`.column[data-status="${task.status}"] .task-list`);
+    if (column) {
+      column.appendChild(createTaskCard(task));
+    }
+  });
+}
 
-        cardElement.innerHTML = `
-            <h3>${card.title}</h3>
-            <p>${card.description}</p>
-            <div class="card-actions">
-                ${deleteButton}
-                ${editButton}
-            </div>
-        `;
-        cardElement.addEventListener('dragstart', dragStart);
+function createTaskCard(task) {
+  const card = document.createElement('div');
+  card.classList.add('task');
+  card.setAttribute('draggable', 'true');
+  card.dataset.id = task.id;
 
-        if (card.status === 'todo') {
-            todoColumn.appendChild(cardElement);
-        } else if (card.status === 'doing') {
-            doingColumn.appendChild(cardElement);
-        } else {
-            doneColumn.appendChild(cardElement);
-        }
+  card.innerHTML = `
+    <h4>${task.title}</h4>
+    <p>${task.desc}</p>
+    <div class="task-actions">
+      <i class="fas fa-edit"></i>
+      <i class="fas fa-trash-alt red"></i>
+    </div>
+  `;
+
+  // Drag events
+  card.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', task.id);
+  });
+
+  // Edit
+  card.querySelector('.fa-edit').addEventListener('click', () => {
+    editingTask = task;
+    titleInput.value = task.title;
+    descInput.value = task.desc;
+    modal.style.display = 'flex';
+  });
+
+  // Delete
+  card.querySelector('.fa-trash-alt').addEventListener('click', () => {
+    let tasks = getTasks().filter(t => t.id !== task.id);
+    saveTasks(tasks);
+    renderTasks();
+  });
+
+  return card;
+}
+
+// Add task button
+addTaskBtns.forEach(btn => {
+  btn.addEventListener('click', e => {
+    currentColumn = e.target.closest('.column').dataset.status;
+    editingTask = null;
+    titleInput.value = '';
+    descInput.value = '';
+    modal.style.display = 'flex';
+  });
+});
+
+// Save task
+saveBtn.addEventListener('click', () => {
+  const title = titleInput.value.trim();
+  const desc = descInput.value.trim();
+
+  if (!title || !desc) return alert('Title and Description are required');
+
+  let tasks = getTasks();
+
+  if (editingTask) {
+    tasks = tasks.map(t => t.id === editingTask.id ? { ...t, title, desc } : t);
+  } else {
+    tasks.push({
+      id: Date.now().toString(),
+      title,
+      desc,
+      status: currentColumn,
     });
+  }
 
-    document.querySelectorAll('.delete-card-btn').forEach((button) => {
-        button.addEventListener('click', deleteCard);
-    });
-
-    document.querySelectorAll('.edit-card-btn').forEach((button) => {
-        button.addEventListener('click', editCard);
-    });
-}
-
-addCardBtn.addEventListener('click', () => {
-    modal.style.display = 'block';
-    editingCardId = null;
-    cardTitleInput.value = '';
-    cardDescriptionInput.value = '';
+  saveTasks(tasks);
+  modal.style.display = 'none';
+  renderTasks();
 });
 
-// Close modal
-closeBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-    cardTitleInput.value = '';
-    cardDescriptionInput.value = '';
-    editingCardId = null;
+// Cancel modal
+cancelBtn.addEventListener('click', () => {
+  modal.style.display = 'none';
 });
 
-// Save card
-saveCardBtn.addEventListener('click', () => {
-    const title = cardTitleInput.value.trim();
-    const description = cardDescriptionInput.value.trim();
-
-    if (!title || title.length === 0) {
-        alert('Please enter a valid title.');
-        return;
-    }
-
-    if (!description || description.length === 0) {
-        alert('Please enter a valid description.');
-        return;
-    }
-
-    if (editingCardId) {
-        const cardIndex = cards.findIndex((card) => card.id === editingCardId);
-        if (cardIndex !== -1) {
-            cards[cardIndex].title = title;
-            cards[cardIndex].description = description;
-        }
-        editingCardId = null;
-    } else {
-        const newCard = {
-            id: Date.now(),
-            title: title,
-            description: description,
-            status: 'todo',
-        };
-        cards.push(newCard);
-    }
-
-    localStorage.setItem('cards', JSON.stringify(cards));
-    renderCards();
-
-    modal.style.display = 'none';
-    cardTitleInput.value = '';
-    cardDescriptionInput.value = '';
+// Clear tasks per column
+clearBtns.forEach(btn => {
+  btn.addEventListener('click', e => {
+    const status = e.target.closest('.column').dataset.status;
+    let tasks = getTasks().filter(t => t.status !== status);
+    saveTasks(tasks);
+    renderTasks();
+  });
 });
 
-deleteAllCardsBtn.addEventListener('click', () => {
-    if (cards.length === 0) {
-        return;
-    }
+// Drag & Drop
+document.querySelectorAll('.task-list').forEach(list => {
+  list.addEventListener('dragover', e => e.preventDefault());
 
-    if (confirm('Are you sure you want to delete all cards?')) {
-        cards = [];
-        localStorage.setItem('cards', JSON.stringify(cards));
-        renderCards();
-    }
+  list.addEventListener('drop', e => {
+    const id = e.dataTransfer.getData('text/plain');
+    const tasks = getTasks().map(t =>
+      t.id === id ? { ...t, status: list.closest('.column').dataset.status } : t
+    );
+    saveTasks(tasks);
+    renderTasks();
+  });
 });
 
-function deleteCard(event) {
-    const cardId = parseInt(event.currentTarget.dataset.id);
-    cards = cards.filter((card) => card.id !== cardId);
-    localStorage.setItem('cards', JSON.stringify(cards));
-    renderCards();
-}
-
-function editCard(event) {
-    editingCardId = parseInt(event.target.closest('.edit-card-btn').dataset.id);
-    const card = cards.find((card) => card.id === editingCardId);
-
-    cardTitleInput.value = card.title;
-    cardDescriptionInput.value = card.description;
-    modal.style.display = 'block';
-}
-
-function dragStart(event) {
-    draggedCardId = event.target.id;
-    event.dataTransfer.setData('text', draggedCardId);
-}
-
-function dragOver(event) {
-    event.preventDefault();
-}
-
-function drop(event) {
-    event.preventDefault();
-    const targetColumn = event.target;
-    const cardId = event.dataTransfer.getData('text');
-    const card = document.getElementById(cardId);
-
-    if (card && targetColumn.classList.contains('column')) {
-        targetColumn.appendChild(card);
-
-        const cardIndex = cards.findIndex((c) => c.id === parseInt(cardId));
-        cards[cardIndex].status = targetColumn.id;
-        localStorage.setItem('cards', JSON.stringify(cards));
-    }
-}
-
-renderCards();
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+  renderTasks();
+});

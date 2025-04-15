@@ -1,69 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trello</title>
-    <link rel="stylesheet" href="style.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-      integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-  </head>
-  <body>
-    <header>
-      <h1>Trello</h1>
-    </header>
-    <main>
-      <div class="buttons">
-        <button id="add-card-btn" title="Add New Card">
-          <i class="fas fa-plus add-icon"></i>
-        </button>
-        <button id="delete-all-cards-btn" title="Delete All Cards">
-          <i class="fas fa-trash-alt delete-all-icon"></i>
-        </button>
-      </div>
-      <div class="columns">
-        <div
-          class="column"
-          id="todo"
-          ondrop="drop(event)"
-          ondragover="dragOver(event)"
-        >
-          <h2>To Do</h2>
-        </div>
-        <div
-          class="column"
-          id="doing"
-          ondrop="drop(event)"
-          ondragover="dragOver(event)"
-        >
-          <h2>Doing</h2>
-        </div>
-        <div
-          class="column"
-          id="done"
-          ondrop="drop(event)"
-          ondragover="dragOver(event)"
-        >
-          <h2>Done</h2>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trello Board</title>
+  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+</head>
+<body>
+  <h1 class="board-title">Trello Board</h1>
+  <div class="board">
+    <div class="column" data-status="todo">
+      <div class="column-header">
+        <span>To Do</span>
+        <div>
+          <button class="add-task-btn"><i class="fas fa-plus"></i></button>
+          <button class="clear-tasks-btn"><i class="fas fa-trash-alt red"></i></button>
         </div>
       </div>
-      <div id="modal" class="modal">
-        <div class="modal-content">
-          <span class="close">&times;</span>
-          <h2>Add New Card</h2>
-          <label for="card-title">Title:</label>
-          <input type="text" id="card-title" />
-          <label for="card-description">Description:</label>
-          <textarea id="card-description"></textarea>
-          <button id="save-card-btn">Save</button>
+      <div class="task-list"></div>
+    </div>
+    <div class="column" data-status="doing">
+      <div class="column-header">
+        <span>Doing</span>
+        <div>
+          <button class="add-task-btn"><i class="fas fa-plus"></i></button>
+          <button class="clear-tasks-btn"><i class="fas fa-trash-alt red"></i></button>
         </div>
       </div>
-    </main>
-    <script src="script.js"></script>
-  </body>
+      <div class="task-list"></div>
+    </div>
+    <div class="column" data-status="done">
+      <div class="column-header">
+        <span>Done</span>
+        <div>
+          <button class="add-task-btn"><i class="fas fa-plus"></i></button>
+          <button class="clear-tasks-btn"><i class="fas fa-trash-alt red"></i></button>
+        </div>
+      </div>
+      <div class="task-list"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal">
+    <div class="modal-content">
+      <h3>Add / Edit Task</h3>
+      <input type="text" id="task-title" placeholder="Title" />
+      <textarea id="task-desc" placeholder="Description"></textarea>
+      <div class="modal-buttons">
+        <button id="save-task">Save</button>
+        <button id="cancel-task">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
 </html>
